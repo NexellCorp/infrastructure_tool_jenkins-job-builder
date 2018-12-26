@@ -109,3 +109,10 @@
                 --qa-token ${QA_REPORTS_TOKEN} \
                 --test-plan ${WORKSPACE}/_Jenkins_job_builder/s5p4418/yocto/sumo/daily/lava-test-plan-yocto-sumo-s5p4418-daily.yaml
 
+    publishers:
+        - logparser:
+            use-project-rules: false
+            parse-rules: '${JENKINS_HOME}/build_rule/build_yocto.rules'
+            unstable-on-warning: false
+            fail-on-error: true
+            show-graphs: true
