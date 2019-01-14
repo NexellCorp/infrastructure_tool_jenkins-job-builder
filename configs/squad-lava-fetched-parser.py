@@ -43,7 +43,7 @@ class AsyncTask:
         self.waitTime += retryPeriod
 
         if self.waitTime >= waitMaxTime :
-            return "Fetched from LAVA Fail!"
+            return "LAVA Fetched Fail!"
 
         threading.Timer(retryPeriod, self.resultParse).start()
 
