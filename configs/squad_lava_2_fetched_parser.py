@@ -10,8 +10,9 @@ waitMaxTime = 7200  # 7200s, 2 hours
 
 
 class AsyncTask:
-    def __init__(self, url):
+    def __init__(self, url, url2):
         self.url = url
+        self.url2 = url2
         self.waitTime = 0
         self.polltry = 1
         pass
@@ -36,10 +37,10 @@ class AsyncTask:
 
                     if val == fetched_complete_val:
                         print("LAVA Fetched SUCCESS")
-                        pass_check_main(self.url)
+                        pass_check_main(self.url, self.url2)
                         return "pass"
 
-                    print("Try : %d, Polling peiod %ds, spent time %dm, waiting..." % (self.polltry, retryPeriod, self.waitTime / 60))
+                    # print("Try : %d, Polling peiod %ds, spent time %dm, waiting..." % (self.polltry, retryPeriod, self.waitTime / 60))
 
         self.polltry += 1
         self.waitTime += retryPeriod
@@ -51,6 +52,6 @@ class AsyncTask:
         threading.Timer(retryPeriod, self.resultParse).start()
 
 
-def fetched_check_main(arg1):
-    periodTask = AsyncTask(arg1)
+def fetched_check_main(arg1, arg2):
+    periodTask = AsyncTask(arg1, arg2)
     periodTask.resultParse()
