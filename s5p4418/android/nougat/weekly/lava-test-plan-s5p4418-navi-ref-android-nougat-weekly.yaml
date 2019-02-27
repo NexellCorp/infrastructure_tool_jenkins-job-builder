@@ -87,7 +87,7 @@ actions:
       #failure_retry: 3
       nexell_ext: dummy
       definitions:
-          - repository: https://github.com/NexellCorp/infrastructure_lava_test.git
+          - repository: https://review.gerrithub.io/NexellCorp/infrastructure_lava_test
             from: git
             path: automated/android/apk-automation/apk-automation.yaml
             name: antutu-nexell
