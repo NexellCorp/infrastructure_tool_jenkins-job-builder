@@ -1,7 +1,7 @@
-device_type: s5p4418-convergence-svmc-type
+device_type: s5p4418-navi-ref-type
 job_name: lava-test-s5p4418-convergence-svmc-yocto-sumo-ubuntu-weekly
 tags:
-  - s5p4418-convergence-svmc-ubuntu
+  - s5p4418-convergence-svmc
 timeouts:
   job:
     minutes: 60
@@ -33,11 +33,11 @@ actions:
           archive: tar
           dir_name: result-s5p4418-convergence-svmc-ubuntu
           deploy_script: /home/lava/bin/nexell-lava-commands.sh
-          deploy_command1: reboot-bootloader
-          deploy_command2: fastboot-download
-          #deploy_command1: dummy1
-          #deploy_command2: dummy2
-          device_path: '/dev/ttyUSB2'
+          #deploy_command1: reboot-bootloader
+          #deploy_command2: fastboot-download
+          deploy_command1: dummy1
+          deploy_command2: dummy2
+          device_path: '/dev/ttyUSB0'
           afterdeploy_command1: 'False'
           afterdeploy_command2: 'False'
           test: nothing
@@ -63,14 +63,14 @@ actions:
           dir_name: result-s5p4418-convergence-svmc-ubuntu
           #command_param: boot
           #command_param: yocto-uboot-serial
-          command_param: boot-yocto
-          command_param2: enter
-          #command_param: dummy1
-          #command_param2: dummy2
-          command_param3: auto-login-cmd
-          command_param4: start-adbd
-          command_param5: enter
-          device_path: '/dev/ttyUSB2'
+          #command_param: boot-yocto
+          #command_param2: enter
+          command_param: dummy1
+          command_param2: dummy2
+          #command_param3: auto-login-cmd
+          #command_param4: start-adbd
+          #command_param5: enter
+          device_path: '/dev/ttyUSB0'
   - test:
       namespace: s5p4418-deploy
       connection-namespace: s5p4418-boot
@@ -78,30 +78,30 @@ actions:
       timeout:
         minutes: 40
       #failure_retry: 3
-      name: s5p4418-convergence-svmc-test
+      name: s5p4418-convergence-ubuntu-test
       nexell_ext:
           command: /home/lava/bin/nexell-lava-commands.sh
           dir_name: result-s5p4418-convergence-svmc-ubuntu
-          device_path: '/dev/ttyUSB2'
+          device_path: '/dev/ttyUSB0'
           password: nexell
       definitions:
-          #- repository: https://github.com/NexellCorp/infrastructure_lava_test.git
+          #- repository: https://review.gerrithub.io/NexellCorp/infrastructure_lava_test
             #from: git
             #path: lava-test-shell/smoke-tests-basic.yaml
             #name: smoke-tests
-          - repository: https://github.com/NexellCorp/infrastructure_lava_test.git
+          - repository: https://review.gerrithub.io/NexellCorp/infrastructure_lava_test
             from: git
             path: automated/linux/kselftest/nexell-kselftest.yaml
             name: nexell-kselftest
             params:
                 ROOT: true
-          - repository: https://github.com/NexellCorp/infrastructure_lava_test.git
+          - repository: https://review.gerrithub.io/NexellCorp/infrastructure_lava_test
             from: git
             path: automated/linux/sysbench/nexell-sysbench.yaml
             name: nexell-sysbench
             params:
                 ROOT: true
-          #- repository: https://github.com/NexellCorp/infrastructure_lava_test.git
+          #- repository: https://review.gerrithub.io/NexellCorp/infrastructure_lava_test
             #from: git
             #path: automated/linux/ltp/nexell-ltp.yaml
             #name: nexell-ltp
