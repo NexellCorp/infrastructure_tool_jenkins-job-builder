@@ -1,0 +1,199 @@
+- job:
+    name: 'unit_test_i2c_linux_kernel4.4.x_TEST'
+    display-name: 'unit_test_i2c_linux_kernel4.4.x_TEST'
+    description: 's5p4418-convergence-svmc i2c unit test'
+    project-type: freestyle
+    defaults: global
+    properties:
+        - authorization:
+            anonymous:
+                - job-read
+                - job-extended-read
+                - job-workspace
+        - build-discarder:
+            days-to-keep: 5
+            num-to-keep: 3
+    disabled: false
+    node: master
+    parameters:
+        - string:
+            name: LAVA_SERVER
+            default: 'nexell.lava.server'
+            description: 'https://192.168.1.20'
+        - string:
+            name: QA_SERVER
+            default: 'http://192.168.1.20:5000'
+        - string:
+            name: QA_SERVER_TEAM
+            default: 'nx-solution-team'
+        - string:
+            name: QA_SERVER_PROJECT
+            default: 'unit-test-i2c-linux-kernel-4.4.x'
+        - string:
+            name: QA_REPORTS_TOKEN
+            default: '0e9c0f8a4a272851557933c7a0f6e21607670c75'
+            description: 'token of the nxJenkins in SQUAD system'
+        - string:
+            name: DEVICE_TYPE
+            default: 's5p4418-convergence-svmc-type'
+
+    triggers:
+        - gerrit:
+            trigger-on:
+              - patchset-created-event:
+                  exclude-drafts: true
+                  exclude-trivial-rebase: true
+                  exclude-no-code-change: true
+            projects:
+              - project-compare-type: 'PLAIN'
+                project-pattern: 'NexellCorp/linux_kernel-4.4.x'
+                branches:
+                  - branch-compare-type: 'PLAIN'
+                    branch-pattern: 'nexell'
+                file-paths:
+                  - compare-type: ANT
+                    pattern: drivers/media/i2c/**
+            skip-vote:
+                successful: false
+                failed: false
+                unstable: false
+                notbuilt: false
+            silent: false
+            silent-start: false
+            escape-quotes: false
+            no-name-and-email: false
+            notification-level: ALL
+            dynamic-trigger-enabled: false
+            server-name: NexellCorpGerritHub
+            failure-message: |
+
+              **************************************************
+              LAVA TEST Fail!
+
+              Please follow the link below...
+
+              SQUAD : ${QA_SERVER}/${QA_SERVER_TEAM}/${QA_SERVER_PROJECT}/build/${JOB_NAME}-${BUILD_NUMBER}/
+              **************************************************
+
+    wrappers:
+        - timestamps
+        - workspace-cleanup
+        - credentials-binding:
+            - text:
+                credential-id: QA_REPORTS_TOKEN
+                variable: QA_REPORTS_TOKEN
+    builders:
+        - shell: |
+            #!/bin/sh
+
+            echo $PWD
+            ${JENKINS_HOME}/scripts/checkGitStatus.sh -p NexellCorp/linux_kernel-4.4.x -b nexell
+            git checkout nexell
+
+            echo "========================================"
+            echo ${GERRIT_PATCHSET_REVISION}
+            echo "========================================"
+            ${JENKINS_HOME}/scripts/getPatchSetLatest.sh -p NexellCorp/linux_kernel-4.4.x -b nexell -c ${GERRIT_PATCHSET_REVISION}
+
+            echo "kernel build!"
+            echo "##################################################################################"
+            echo " s5p4418-convergence-svmc kernel build start !"
+            echo "##################################################################################"
+            make clean
+            make ARCH=arm s5p4418_convergence_svmc_defconfig
+            make ARCH=arm CROSS_COMPILE=arm-cortex_a9-linux-gnueabi- Image -j4
+            make ARCH=arm CROSS_COMPILE=arm-cortex_a9-linux-gnueabi- dtbs -j4
+            make ARCH=arm CROSS_COMPILE=arm-cortex_a9-linux-gnueabi- modules -j4
+
+            echo "========================================"
+            echo "boot.img convert"
+            echo "========================================"
+            wget http://192.168.1.25:8080/s5p4418/yocto/sumo/weekly/result-s5p4418-convergence-svmc-ubuntu-for-lava-test.tar.gz     
+            tar xvzf result-s5p4418-convergence-svmc-ubuntu-for-lava-test.tar.gz
+            cp arch/arm/boot/Image result-s5p4418-convergence-svmc-ubuntu/boot/
+            cp arch/arm/boot/dts/nexell/s5p4418-convergence-svmc-*.dtb result-s5p4418-convergence-svmc-ubuntu/boot/
+            cd result-s5p4418-convergence-svmc-ubuntu
+
+            echo "========================================"
+            echo "convert to boot.img"
+            echo "========================================"
+            echo " partition size reference ==> "
+            echo "   meta-nexell/meta-nexell-distro/tools/convert_tools/convert_images.sh"
+            make_ext4fs -s -l 67108864 boot.img ./boot/
+            cd ..
+
+            echo "========================================"
+            echo "compress result-s5p4418-convergence-svmc-ubuntu-i2c-for-lava-test.tar.gz"
+            echo "========================================"
+            tar cvzf result-s5p4418-convergence-svmc-ubuntu-i2c-for-lava-test.tar.gz   result-s5p4418-convergence-svmc-ubuntu/*
+
+        - publish-over-ssh:
+            site: 'nexell-snapshot'
+            target: 's5p4418/kernel/i2c_test'
+            source: 'result-s5p4418-convergence-svmc-ubuntu/boot.img'
+            remove-prefix: 'result-s5p4418-convergence-svmc-ubuntu'
+            timeout: 3600
+
+        - publish-over-ssh:
+            site: 'nexell-snapshot'
+            target: 's5p4418/kernel/i2c_test'
+            source: 'arch/arm64/boot/Image arch/arm64/boot/dts/nexell/s5p4418-convergence-svmc*.dtb'
+            remove-prefix: 'arch/arm64/boot'
+            timeout: 3600
+
+        - publish-over-ssh:
+            site: 'nexell-snapshot'
+            target: 's5p4418/yocto/sumo/weekly'
+            source: 'result-s5p4418-convergence-svmc-ubuntu-i2c-for-lava-test.tar.gz'
+            timeout: 3600
+
+        - shell: |
+            #!/bin/bash
+
+            echo "---------------------------------------"
+            echo "   submit to SQUAD                     "
+            echo "---------------------------------------"
+
+            ret=`python ${WORKSPACE}/../_Jenkins_job_builder/configs/submit_for_testing.py \
+                --device-type ${DEVICE_TYPE} \
+                --build-number ${JOB_NAME}-${BUILD_NUMBER} \
+                --lava-server ${LAVA_SERVER} \
+                --qa-server ${QA_SERVER} \
+                --qa-server-team ${QA_SERVER_TEAM} \
+                --qa-server-project ${QA_SERVER_PROJECT} \
+                --qa-token ${QA_REPORTS_TOKEN} \
+                --test-plan ${WORKSPACE}/../_Jenkins_job_builder/s5p4418/yocto/sumo/unit/lava-test-plan-yocto-sumo-s5p4418-unit-test-i2c-linux-kernel4.4.x.yaml`
+
+            echo "---------------------------------------"
+            echo "   POST return value parsing           "
+            echo "---------------------------------------"
+            IFS=' ' read -ra ADDR <<< "$ret"
+            if [ "${ADDR[0]}" == "SUCCESS" ] ; then
+                echo "GOOD"
+                echo "api/testjobs/${ADDR[1]}"
+            fi
+
+            TESTJOBS="/api/testjobs/${ADDR[1]}/"
+            echo "testjobs : ${TESTJOBS}"
+
+            echo "---------------------------------------"
+            echo " LAVA submitted & fetched & pass check "
+            echo "---------------------------------------"
+            python ${WORKSPACE}/../_Jenkins_job_builder/configs/squad_lava_check.py "${QA_SERVER}${TESTJOBS}" "${QA_SERVER}/${QA_SERVER_TEAM}/${QA_SERVER_PROJECT}/build/${JOB_NAME}-${BUILD_NUMBER}/"
+
+            sleep 5
+
+            python ${WORKSPACE}/../_Jenkins_job_builder/configs/squad_lava_test_pass_fail.py "${QA_SERVER}${TESTJOBS}"
+
+    publishers:
+        - logparser:
+            use-project-rules: false
+            parse-rules: '/var/lib/jenkins/build_rule/build_yocto.rules'
+            unstable-on-warning: false
+            fail-on-error: true
+            show-graphs: true
+        - email:
+            recipients: teamleader@nexell.co.kr
+            notify-every-unstable-build: true
+            send-to-individuals: false
+
