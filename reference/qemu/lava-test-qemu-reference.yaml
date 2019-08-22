@@ -1,5 +1,7 @@
 # Your first LAVA JOB definition for an x86_64 QEMU
 device_type: qemu
+tags:
+  - qemu01
 job_name: qemu Jenkins-SQUAD-LAVA test reference
 
 timeouts:
