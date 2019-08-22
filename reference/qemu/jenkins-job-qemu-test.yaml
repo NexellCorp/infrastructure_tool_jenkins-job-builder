@@ -33,7 +33,7 @@
             description: 'project name in Squad system'
         - string:
             name: QA_REPORTS_TOKEN
-            default: '0e9c0f8a4a272851557933c7a0f6e21607670c75'
+            default: 'f3bea0ededed73761fe549478fcfb870ebb4c113'
             description: 'token of the nxJenkins in SQUAD system'
         - string:
             name: DEVICE_TYPE
