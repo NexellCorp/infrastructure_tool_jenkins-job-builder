@@ -1,5 +1,5 @@
 - job:
-    name: 'squad_lava_reference'
+    name: 'squad_lava_reference - replay'
     display-name: 'squad_lava_reference'
     project-type: freestyle
     defaults: global
