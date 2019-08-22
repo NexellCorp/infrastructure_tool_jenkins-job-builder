@@ -1,5 +1,7 @@
 # Your first LAVA JOB definition for an x86_64 QEMU
 device_type: qemu
+tags:
+  - qemu01
 job_name: qemu Jenkins-SQUAD-LAVA test reference
 
 timeouts:
@@ -26,6 +28,7 @@ metadata:
 # ACTION_BLOCK
 actions:
 - deploy:
+    namespace: qemu-deploy
     timeout:
       minutes: 5
     to: tmpfs
@@ -38,6 +41,7 @@ actions:
 
 # BOOT_BLOCK
 - boot:
+    namespace: qemu-boot
     timeout:
       minutes: 2
     method: qemu
@@ -48,6 +52,8 @@ actions:
       username: root
 
 - test:
+    namespace: qemu-test
+    connection-namespace: qemu-boot
     timeout:
       minutes: 5
     definitions:
