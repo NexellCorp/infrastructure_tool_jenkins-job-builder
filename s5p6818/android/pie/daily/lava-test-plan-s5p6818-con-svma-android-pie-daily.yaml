@@ -35,7 +35,7 @@ actions:
       connection: serial
       method: fastboot
       prompts:
-      - 'root@s5p6818-avn-ref:'
+      - 'root@s5p6818-con_svma:'
       timeout:
         minutes: 10
       nexell_ext:
